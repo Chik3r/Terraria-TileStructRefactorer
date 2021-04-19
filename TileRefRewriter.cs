@@ -11,12 +11,17 @@ namespace TileStructRefactorer
 
         public TileRefRewriter(SemanticModel model) => _model = model;
         
-        // TODO: Remove "if (tile == null)"
+        // TODO: Remove "if (tile == null)" by converting:
+        // "tile == null" to "false"
+        // "tile != null" to "true"
         
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
             // Check if the type of the local variable is Terraria.Tile
             if (!IsTile(node.Declaration.Type))
+                return base.VisitLocalDeclarationStatement(node);
+
+            if (node.Declaration.Type is RefTypeSyntax)
                 return base.VisitLocalDeclarationStatement(node);
             
             // Change the type to 'ref type' instead of 'type'
@@ -44,7 +49,6 @@ namespace TileStructRefactorer
             
             var newNode = node.WithDeclaration(newDeclaration.NormalizeWhitespace().WithTriviaFrom(node.Declaration));
             return newNode;
-            return node;
         }
 
         public override SyntaxNode VisitAssignmentExpression(AssignmentExpressionSyntax node)
@@ -62,6 +66,9 @@ namespace TileStructRefactorer
 
                 return base.VisitAssignmentExpression(node);
             }
+            
+            if (node.Right is RefExpressionSyntax)
+                return base.VisitAssignmentExpression(node);
 
             var newRight = RefExpression(node.Right);
             var newNode = node.WithRight(newRight.NormalizeWhitespace()).WithTriviaFrom(node);
