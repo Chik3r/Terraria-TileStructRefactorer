@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.MSBuild;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -15,39 +16,40 @@ namespace TileStructRefactorer
 			MSBuildLocator.RegisterDefaults();
 
 			using var workspace = MSBuildWorkspace.Create();
-			
+
 			// Print message for WorkspaceFailed event to help diagnosing project load failures.
 			workspace.WorkspaceFailed += (o, e) => Console.WriteLine(e.Diagnostic.Message);
 
 			string projectPath = GetProjectLocation();
 			Console.WriteLine($"Loading project '{projectPath}'");
 
-				
-				
 			// Attach progress reporter so we print projects as they are loaded.
-			Project solution = await workspace.OpenProjectAsync(projectPath);
+			Project project = await workspace.OpenProjectAsync(projectPath);
 			Console.WriteLine($"Finished loading project '{projectPath}'");
 
-			foreach (Document document in solution.Documents)
+			ProgressBar bar = ProgressBar.StartNew(project.Documents.Count());
+
+			foreach (Document document in project.Documents)
 			{
 				// if (!document.FilePath.Contains("Collision.cs"))
 				// 	continue;
-					
-				SyntaxTree root = await document.GetSyntaxTreeAsync() ?? 
+
+				SyntaxTree root = await document.GetSyntaxTreeAsync() ??
 				                  throw new Exception("No syntax root - " + document.FilePath);
 
 				SyntaxNode rootNode = await root.GetRootAsync();
 
 				var rewriter = new TileRefRewriter(await document.GetSemanticModelAsync());
 				var result = rewriter.Visit(rootNode) as CompilationUnitSyntax;
-					
+
 				if (!result!.IsEquivalentTo(rootNode))
 				{
 					Console.WriteLine($"Changed {document.FilePath}");
 					// Console.WriteLine(result.ToFullString());
-					await File.WriteAllTextAsync(document.FilePath,
-						result.ToFullString());
+					await File.WriteAllTextAsync(document.FilePath, result.ToFullString());
 				}
+				
+				bar.Report(1);
 			}
 		}
 
