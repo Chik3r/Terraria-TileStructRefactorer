@@ -38,6 +38,12 @@ namespace TileStructRefactorer
             GC.SuppressFinalize(this);
         }
 
+        public void Finish()
+        {
+            Dispose();
+            UpdateProgressText(CreateProgressText());
+        }
+
         public void Report(int v) => Interlocked.Add(ref _currentElements, v);
         
         private void TimerCallback(object state)

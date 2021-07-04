@@ -12,6 +12,8 @@ namespace TileStructRefactorer
 {
 	class Program
 	{
+		private const int Threads = 4;
+		
 		static async Task Main(string[] args)
 		{
 			MSBuildLocator.RegisterDefaults();
@@ -22,26 +24,30 @@ namespace TileStructRefactorer
 			workspace.WorkspaceFailed += (o, e) => Console.WriteLine(e.Diagnostic.Message);
 
 			string projectPath = GetProjectLocation(args);
+			Console.Clear();
 			Console.WriteLine($"Loading project '{projectPath}'");
 
-			// Attach progress reporter so we print projects as they are loaded.
 			Project project = await workspace.OpenProjectAsync(projectPath);
 			Console.WriteLine($"Finished loading project '{projectPath}'");
-			int documentCount = project.Documents.Count();
 
+			int documentCount = project.Documents.Count();
 			ProgressBar bar = ProgressBar.StartNew(documentCount);
 
-			const byte chunkSize = 4;
+			// Split all documents into chunks for parallel processing of files
+			int chunkSize = documentCount / Threads;
 			int i = 0;
 			IEnumerable<IEnumerable<Document>> chunks = from document in project.Documents
 				group document by i++ % chunkSize
 				into part
 				select part.AsEnumerable();
 
+			// Start a task for every chunk
 			List<Task> tasks = chunks.Select(chunk => Task.Run(() => ProcessChunk(chunk, bar))).ToList();
 
+			// Wait until all tasks are done
 			await Task.WhenAll(tasks);
-			Console.ReadLine();
+			bar.Finish();
+			Console.ReadKey();
 		}
 
 		private static async Task ProcessChunk(IEnumerable<Document> chunk, IProgress<int> progress)
