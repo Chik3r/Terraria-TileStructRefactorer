@@ -34,10 +34,10 @@ namespace TileStructRefactorer
             SeparatedSyntaxList<VariableDeclaratorSyntax> newVariables = new();
             foreach (VariableDeclaratorSyntax variableDeclarator in newDeclaration.Variables)
             {
-                // TODO: also change to Dummy if right side value is "null" ("tile = null")
-                if (variableDeclarator.Initializer == null)
+                if (variableDeclarator.Initializer == null || variableDeclarator.Initializer.Value.ToFullString() == "null")
                 {
-                    var a = variableDeclarator.WithInitializer(EqualsValueClause(RefExpression(ParseExpression("Tile.Dummy"))));
+                    VariableDeclaratorSyntax a =
+                        variableDeclarator.WithInitializer(EqualsValueClause(RefExpression(ParseExpression("Tile.Dummy"))));
                     
                     // TODO: do "ref Tile a = new Tile();" instead of "ref Tile a;"
                     newVariables = newVariables.Add(a);
