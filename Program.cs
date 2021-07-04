@@ -41,6 +41,7 @@ namespace TileStructRefactorer
 			List<Task> tasks = chunks.Select(chunk => Task.Run(() => ProcessChunk(chunk, bar))).ToList();
 
 			await Task.WhenAll(tasks);
+			Console.ReadLine();
 		}
 
 		private static async Task ProcessChunk(IEnumerable<Document> chunk, IProgress<int> progress)
@@ -57,10 +58,10 @@ namespace TileStructRefactorer
 
 				if (!result!.IsEquivalentTo(rootNode))
 				{
-					Console.WriteLine($"Changed {document.FilePath}");
+					//Console.WriteLine($"Changed {document.FilePath}");
 					await File.WriteAllTextAsync(document.FilePath, result.ToFullString());
 				}
-				
+
 				progress.Report(1);
 			}
 		}
