@@ -34,11 +34,9 @@ namespace TileStructRefactorer
 			ProgressBar bar = ProgressBar.StartNew(documentCount);
 
 			// Split all documents into chunks for parallel processing of files
-			int chunkSize = documentCount / Threads;
 			int i = 0;
 			IEnumerable<IEnumerable<Document>> chunks = from document in project.Documents
-				group document by i++ % chunkSize
-				into part
+				group document by i++ % Threads into part
 				select part.AsEnumerable();
 
 			// Start a task for every chunk
