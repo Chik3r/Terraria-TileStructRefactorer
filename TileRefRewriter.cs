@@ -17,6 +17,8 @@ namespace TileStructRefactorer
         
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
+            // Converts "Tile tile = x;" to "ref Tile tile = ref x;"
+            
             // Check if the type of the local variable is Terraria.Tile
             if (!IsTile(node.Declaration.Type))
                 return base.VisitLocalDeclarationStatement(node);
@@ -32,10 +34,13 @@ namespace TileStructRefactorer
             SeparatedSyntaxList<VariableDeclaratorSyntax> newVariables = new();
             foreach (VariableDeclaratorSyntax variableDeclarator in newDeclaration.Variables)
             {
+                // TODO: also change to Dummy if right side value is "null" ("tile = null")
                 if (variableDeclarator.Initializer == null)
                 {
+                    var a = variableDeclarator.WithInitializer(EqualsValueClause(RefExpression(ParseExpression("Tile.Dummy"))));
+                    
                     // TODO: do "ref Tile a = new Tile();" instead of "ref Tile a;"
-                    newVariables = newVariables.Add(variableDeclarator);
+                    newVariables = newVariables.Add(a);
                     continue;
                 }
 
