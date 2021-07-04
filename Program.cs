@@ -21,7 +21,7 @@ namespace TileStructRefactorer
 			// Print message for WorkspaceFailed event to help diagnosing project load failures.
 			workspace.WorkspaceFailed += (o, e) => Console.WriteLine(e.Diagnostic.Message);
 
-			string projectPath = GetProjectLocation();
+			string projectPath = GetProjectLocation(args);
 			Console.WriteLine($"Loading project '{projectPath}'");
 
 			// Attach progress reporter so we print projects as they are loaded.
@@ -65,25 +65,34 @@ namespace TileStructRefactorer
 			}
 		}
 
-		private static string GetProjectLocation()
+		private static string GetProjectLocation(string[] args)
 		{
+			// Check if there are any paths in args, and return the first path that is valid
+			foreach (string a in args)
+			{
+				string arg = a;
+				if (VerifyFile(ref arg)) return arg;
+			}
+
 			while (true)
 			{
 				Console.WriteLine("Enter the path of the csproj to load");
 				string path = Console.ReadLine();
 
-				if (Path.GetExtension(path) != ".csproj")
-					path += ".csproj";
-
-				if (!File.Exists(path))
-				{
-					Console.WriteLine("File doesn't exist");
-					continue;
-				}
-
-				Console.Clear();
-				return path;
+				// Check if the file exists and return it
+				if (VerifyFile(ref path))
+					return path;
+				
+				Console.WriteLine("File couldn't be found");
 			}
+		}
+
+		private static bool VerifyFile(ref string path)
+		{
+			if (Path.GetExtension(path) != ".csproj")
+				path += ".csproj";
+
+			return File.Exists(path);
 		}
 	}
 }
