@@ -58,47 +58,29 @@ namespace TileStructRefactorer
 
         public override SyntaxNode VisitAssignmentExpression(AssignmentExpressionSyntax node)
         {
-            if (!IsTile(node.Left) || node.Right is ObjectCreationExpressionSyntax)
-            {
-                // var a = _model.GetSymbolInfo(node.Right);
-                // var aa = _model.GetSymbolInfo(node);
-                // var b = _model.GetDeclaredSymbol(node.Right);
-                // var bb = _model.GetDeclaredSymbol(node);
-                // var c = _model.GetSpeculativeTypeInfo(0, node.Right, SpeculativeBindingOption.BindAsTypeOrNamespace);
-                // var d = _model.GetTypeInfo(node.Right);
-                // var dd = _model.GetTypeInfo(node.Left);
-                // var ee = _model.GetSymbolInfo(node.Left);
+            // Add "ref" to the right side of an assignment
 
+            if (!IsTile(node.Left) || node.Right is ObjectCreationExpressionSyntax)
                 return base.VisitAssignmentExpression(node);
-            }
-            
+
             if (node.Right is RefExpressionSyntax)
                 return base.VisitAssignmentExpression(node);
 
-            var newRight = RefExpression(node.Right);
-            var newNode = node.WithRight(newRight.NormalizeWhitespace()).WithTriviaFrom(node);
-            // var newNode = node.WithRight(RefExpression(node.Right.WithoutTrivia()).WithTriviaFrom(node.Right));
-            // var newNode = node;
-            // var symbol = _model.GetSymbolInfo(node);
-            // var symbol2 = _model.GetSymbolInfo(node.Left);
-            // var symbol3 = _model.GetSymbolInfo(node.Right);
-            // var f = _model.GetTypeInfo(node.Left);
-            // var ff = _model.GetTypeInfo(node.Right);
-            // var a = node.GetLeadingTrivia();
-            // var b = newNode.GetLeadingTrivia();
-            //
+            RefExpressionSyntax newRight = RefExpression(node.Right);
+            AssignmentExpressionSyntax newNode = node.WithRight(newRight.NormalizeWhitespace()).WithTriviaFrom(node);
+
             return newNode;
         }
 
         private bool IsTile(SyntaxNode node)
         {
-            var symbol = _model.GetSymbolInfo(node).Symbol;
-
             // Check if the type of the node is Terraria.Tile
-            var type = _model.GetTypeInfo(node).Type;
+            ITypeSymbol type = _model.GetTypeInfo(node).Type;
             if (type != null)
                 return type.ToDisplayString() == "Terraria.Tile";
-            
+
+            ISymbol symbol = _model.GetSymbolInfo(node).Symbol;
+
             // Check if the symbol of the node is Terraria.Tile
             return symbol != null && symbol.ToDisplayString() == "Terraria.Tile";
         }
