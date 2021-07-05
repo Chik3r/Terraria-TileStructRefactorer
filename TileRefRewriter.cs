@@ -38,8 +38,7 @@ namespace TileStructRefactorer
                 {
                     VariableDeclaratorSyntax a =
                         variableDeclarator.WithInitializer(EqualsValueClause(RefExpression(ParseExpression("Tile.Dummy"))));
-                    
-                    // TODO: do "ref Tile a = new Tile();" instead of "ref Tile a;"
+
                     newVariables = newVariables.Add(a);
                     continue;
                 }
