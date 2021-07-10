@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -69,6 +70,27 @@ namespace TileStructRefactorer
             AssignmentExpressionSyntax newNode = node.WithRight(newRight.NormalizeWhitespace()).WithTriviaFrom(node);
 
             return newNode;
+        }
+
+        public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax node)
+        {
+            if (node.Right.Kind() != SyntaxKind.NullLiteralExpression) return base.VisitBinaryExpression(node);
+
+            if (node.OperatorToken.Kind() != SyntaxKind.EqualsEqualsToken && node.OperatorToken.Kind() != SyntaxKind.ExclamationEqualsToken)
+                return base.VisitBinaryExpression(node);
+
+            if (!IsTile(node.Left)) return base.VisitBinaryExpression(node);
+
+            SyntaxKind n = node.OperatorToken.Kind() switch
+            {
+                SyntaxKind.EqualsEqualsToken => SyntaxKind.FalseLiteralExpression,
+                SyntaxKind.ExclamationEqualsToken => SyntaxKind.TrueLiteralExpression,
+                _ => throw new ArgumentOutOfRangeException(nameof(node))
+            };
+
+            LiteralExpressionSyntax newNullCheck = LiteralExpression(n).WithTriviaFrom(node);
+
+            return newNullCheck;
         }
 
         private bool IsTile(SyntaxNode node)
