@@ -12,10 +12,6 @@ namespace TileStructRefactorer
 
         public TileRefRewriter(SemanticModel model) => _model = model;
         
-        // TODO: Remove "if (tile == null)" by converting:
-        // "tile == null" to "false"
-        // "tile != null" to "true"
-        
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
             // Converts "Tile tile = x;" to "ref Tile tile = ref x;"
@@ -77,6 +73,8 @@ namespace TileStructRefactorer
 
         public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax node)
         {
+            // Convert null checks to true or false
+        
             if (node.Right.Kind() != SyntaxKind.NullLiteralExpression) return base.VisitBinaryExpression(node);
 
             if (node.OperatorToken.Kind() != SyntaxKind.EqualsEqualsToken && node.OperatorToken.Kind() != SyntaxKind.ExclamationEqualsToken)
