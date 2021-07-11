@@ -69,6 +69,9 @@ namespace TileStructRefactorer
             RefExpressionSyntax newRight = RefExpression(node.Right);
             AssignmentExpressionSyntax newNode = node.WithRight(newRight.NormalizeWhitespace()).WithTriviaFrom(node);
 
+            if (node.Left is ElementAccessExpressionSyntax leftAccess && leftAccess.ArgumentList.Arguments.Count == 2)
+                newNode = newNode.WithLeadingTrivia(newNode.GetLeadingTrivia().Add(Comment("// "))).WithTrailingTrivia(Comment("// Commented out by Tile Struct Refactorer"));
+            
             return newNode;
         }
 
